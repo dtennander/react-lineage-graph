@@ -30,18 +30,31 @@ const simpleGraph = [
     name: "dep4",
     dependencies: [
       "dep5",
+      "dep6",
+      "dep7",
     ],
   }, {
     name: "dep5",
+    dependencies: [
+      "dep8"
+    ],
+  }, {
+    name: "dep6",
     dependencies: [],
-  },
+  }, {
+    name: "dep7",
+    dependencies: [],
+  }, {
+    name: "dep8",
+    dependencies: [],
+  }
 ]
 
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <div style={{ width: "100vw", height: "98vh" }}>
-      <LineageView nodes={simpleGraph}>
+      <LineageView nodes={testGraph}>
         <LineageLabel />
         <Details />
         <Minimap />
