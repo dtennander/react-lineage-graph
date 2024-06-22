@@ -1,0 +1,78 @@
+import styled from 'styled-components';
+import { LineageRender, Node } from './LineageRender';
+
+export const StyledView = styled.div`
+  display: relative;
+  overflow: auto;
+  width: 100%;
+  height: 100%;
+
+  font-family: sans-serif;
+`;
+
+const Background = styled.div`
+  background-image: radial-gradient(circle, gray 1px, transparent 1px);
+  background-size: 10px 10px; 
+`;
+
+
+type LineageViewProps = {
+  nodes: Node[];
+  children: React.ReactNode;
+}
+
+
+export const LineageView = ({ children, nodes }: LineageViewProps) => {
+  return (
+    <StyledView>
+      <Background style={{ width: "100%", height: "100%" }}>
+        <LineageRender nodes={nodes} />
+        {children}
+      </Background>
+    </StyledView>
+  )
+}
+
+
+
+export const LineageLabel = () => {
+  return (
+    <div style={{ position: "absolute", top: "1em", "left": "1em" }}>
+      <GlassPlane>
+        <h1>Lineage Label</h1>
+      </GlassPlane>
+    </div>
+  )
+}
+
+const GlassPlane = styled.div`
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 0.5em 1em;
+      `;
+
+
+export const Details = () => {
+  return (
+    <div style={{ position: "absolute", bottom: "1em", left: "1em" }}>
+      <GlassPlane>
+        <h2>Details</h2>
+        <ul>
+          <li>Node 1</li>
+          <li>Node 2</li>
+        </ul>
+      </GlassPlane>
+    </div>
+  )
+}
+
+export const Minimap = () => {
+  return (
+    <div>
+    </div>
+  )
+}
