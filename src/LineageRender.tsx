@@ -1,7 +1,7 @@
 import * as d3 from "d3";
 import { useRef, useEffect, useMemo, memo } from "react";
 import styled from "styled-components";
-import { useNode } from "./LineageContext";
+import { useSetNode } from "./LineageContext";
 
 export type Node = {
   name: string;
@@ -19,7 +19,7 @@ const StyledSvg = styled.svg`
       stroke-width: 2px;
   }
 
-  .selected rect {
+  .node.selected rect {
     fill: lightgreen;
   }
 
@@ -38,8 +38,7 @@ export const LineageRender = memo(({ nodes }: { nodes: Node[] }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const d3Nodes = useMemo(() => addDepth(nodes), [nodes]);
   const links = useMemo(() => createLinks(d3Nodes), [d3Nodes]);
-  // TODO: This causes a re-render when the node is picked
-  const [pickedNode, setPickedNode] = useNode();
+  const setPickedNode = useSetNode();
   useEffect(() => {
     if (!svgRef.current) return;
     const svg = d3.select(svgRef.current);
@@ -52,12 +51,14 @@ export const LineageRender = memo(({ nodes }: { nodes: Node[] }) => {
         })
     );
     const link = drawLinks(zoomableGroup, links)
-    const node = drawNodes(zoomableGroup, d3Nodes, pickedNode)
+    const node = drawNodes(zoomableGroup, d3Nodes, null)
     const simulation = createForceSimulation(svgRef.current, d3Nodes, links);
 
     node.call(handleDrag(simulation));
-    node.on("click", (e, d) => {
+    node.on("click", function (e, d) {
       setPickedNode(nodes.find(n => n.name === d.name) ?? null);
+      d3.selectAll("*").classed('selected', false);
+      d3.select(this).classed('selected', true)
     })
     simulation.on("tick", updatePositions(node, link));
     // return cleanup function
@@ -65,7 +66,7 @@ export const LineageRender = memo(({ nodes }: { nodes: Node[] }) => {
       simulation.stop();
       svg.selectAll("*").remove();
     }
-  }, [svgRef, d3Nodes, links, pickedNode, setPickedNode, nodes]);
+  }, [svgRef, d3Nodes, links, setPickedNode, nodes]);
   return (
     <StyledSvg ref={svgRef} width="100%" height="100%" />
   )

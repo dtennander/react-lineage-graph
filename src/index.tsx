@@ -60,7 +60,7 @@ const GlassPlane = styled.div`
 
 
 export const Details = () => {
-  const [pickedNode] = useNode();
+  const pickedNode = useNode();
   return (
     <div style={{ position: "absolute", bottom: "1em", left: "1em" }}>
       <GlassPlane>
