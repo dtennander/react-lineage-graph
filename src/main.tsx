@@ -54,12 +54,12 @@ const simpleGraph = [
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <div style={{ width: "100vw", height: "98vh" }}>
-      <LineageView nodes={testGraph}>
+      <LineageView nodes={simpleGraph}>
         <LineageLabel />
         <Details />
         <Minimap />
-      </LineageView>
+    </LineageView>
     </div>
-
+ 
   </React.StrictMode>,
 )

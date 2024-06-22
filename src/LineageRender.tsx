@@ -43,13 +43,13 @@ export const LineageRender = memo(({ nodes }: { nodes: Node[] }) => {
     if (!svgRef.current) return;
     const svg = d3.select(svgRef.current);
     const zoomableGroup = svg.append("g");
-    svg.call(
-      d3.zoom<SVGSVGElement, unknown>()
-        .scaleExtent([0.5, 5])
-        .on("zoom", (event) => {
-          zoomableGroup.attr("transform", event.transform);
-        })
-    );
+    const zoom = d3.zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.5, 5])
+      .on("zoom", (event) => {
+        zoomableGroup.attr("transform", event.transform);
+      })
+
+    svg.call(zoom);
     const link = drawLinks(zoomableGroup, links)
     const node = drawNodes(zoomableGroup, d3Nodes, null)
     const simulation = createForceSimulation(svgRef.current, d3Nodes, links);
@@ -61,6 +61,24 @@ export const LineageRender = memo(({ nodes }: { nodes: Node[] }) => {
       d3.select(this).classed('selected', true)
     })
     simulation.on("tick", updatePositions(node, link));
+    let firstEnd = true;
+    simulation.on("end", () => {
+      if (!firstEnd) return
+      firstEnd = false;
+      const width = svgRef.current!.clientWidth;
+      const height = svgRef.current!.clientHeight;
+      const bounds = svg.node()?.getBBox();
+      const fullWidth = bounds?.width ?? 0;
+      const fullHeight = bounds?.height ?? 0;
+      const midX = bounds!.x + fullWidth / 2;
+      const midY = bounds!.y + fullHeight / 2;
+
+      const scale = 0.9 / Math.max(fullWidth / width, fullHeight / height);
+      const translate = [width / 2 - scale * midX, height / 2 - scale * midY];
+      svg.transition()
+        .duration(750)
+        .call(zoom.transform, d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale))
+    });
     // return cleanup function
     return () => {
       simulation.stop();
