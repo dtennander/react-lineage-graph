@@ -1,6 +1,7 @@
 import * as d3 from "d3";
-import { useRef, useEffect, useMemo } from "react";
+import { useRef, useEffect, useMemo, memo } from "react";
 import styled from "styled-components";
+import { useNode } from "./LineageContext";
 
 export type Node = {
   name: string;
@@ -18,6 +19,10 @@ const StyledSvg = styled.svg`
       stroke-width: 2px;
   }
 
+  .selected rect {
+    fill: lightgreen;
+  }
+
   .link {
       fill: none;
       stroke: #aaa;
@@ -29,10 +34,12 @@ const StyledSvg = styled.svg`
  * Renders a lineage graph using d3
  * @param nodes - The nodes of the graph
  */
-export const LineageRender = ({ nodes }: { nodes: Node[] }) => {
+export const LineageRender = memo(({ nodes }: { nodes: Node[] }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const d3Nodes = useMemo(() => addDepth(nodes), [nodes]);
   const links = useMemo(() => createLinks(d3Nodes), [d3Nodes]);
+  // TODO: This causes a re-render when the node is picked
+  const [pickedNode, setPickedNode] = useNode();
   useEffect(() => {
     if (!svgRef.current) return;
     const svg = d3.select(svgRef.current);
@@ -45,21 +52,24 @@ export const LineageRender = ({ nodes }: { nodes: Node[] }) => {
         })
     );
     const link = drawLinks(zoomableGroup, links)
-    const node = drawNodes(zoomableGroup, d3Nodes)
+    const node = drawNodes(zoomableGroup, d3Nodes, pickedNode)
     const simulation = createForceSimulation(svgRef.current, d3Nodes, links);
 
     node.call(handleDrag(simulation));
+    node.on("click", (e, d) => {
+      setPickedNode(nodes.find(n => n.name === d.name) ?? null);
+    })
     simulation.on("tick", updatePositions(node, link));
     // return cleanup function
     return () => {
       simulation.stop();
       svg.selectAll("*").remove();
     }
-  }, [svgRef, d3Nodes, links]);
+  }, [svgRef, d3Nodes, links, pickedNode, setPickedNode, nodes]);
   return (
     <StyledSvg ref={svgRef} width="100%" height="100%" />
   )
-}
+})
 
 const createLinks = (nodes: D3Node[]): d3.SimulationLinkDatum<D3Node>[] => {
   return nodes.map((d) =>
@@ -86,12 +96,13 @@ const addDepth = (nodes: Node[]): D3Node[] => {
 /********  D3 Functions ********/
 
 // Draws nodes on the canvas
-const drawNodes = <E extends Element,>(svg: d3.Selection<E, unknown, null, undefined>, nodes: D3Node[]) => {
+const drawNodes = <E extends Element,>(svg: d3.Selection<E, unknown, null, undefined>, nodes: D3Node[], pickedNode: Node | null) => {
   const nodeBoxes = svg.append("g")
     .selectAll("g")
     .data<D3Node>(nodes)
     .enter().append("g")
     .attr("class", "node")
+    .classed("selected", d => d.name === pickedNode?.name);
   nodeBoxes
     .append("rect")
     .attr("width", 250)

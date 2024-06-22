@@ -1,5 +1,6 @@
 import styled from 'styled-components';
 import { LineageRender, Node } from './LineageRender';
+import { LineageProvider, useNode } from './LineageContext';
 
 export const StyledView = styled.div`
   display: relative;
@@ -25,10 +26,12 @@ type LineageViewProps = {
 export const LineageView = ({ children, nodes }: LineageViewProps) => {
   return (
     <StyledView>
-      <Background style={{ width: "100%", height: "100%" }}>
-        <LineageRender nodes={nodes} />
-        {children}
-      </Background>
+      <LineageProvider>
+        <Background style={{ width: "100%", height: "100%" }}>
+          <LineageRender nodes={nodes} />
+          {children}
+        </Background>
+      </LineageProvider>
     </StyledView>
   )
 }
@@ -53,17 +56,23 @@ const GlassPlane = styled.div`
       -webkit-backdrop-filter: blur(10px);
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       padding: 0.5em 1em;
-      `;
+`;
 
 
 export const Details = () => {
+  const [pickedNode] = useNode();
   return (
     <div style={{ position: "absolute", bottom: "1em", left: "1em" }}>
       <GlassPlane>
-        <h2>Details</h2>
+        <h3>{pickedNode?.name}</h3>
         <ul>
-          <li>Node 1</li>
-          <li>Node 2</li>
+          {
+            Object.entries(pickedNode || {}).map(([key, value]) => (
+              <li key={key}>
+                <strong>{key}</strong>: {value}
+              </li>
+            ))
+          }
         </ul>
       </GlassPlane>
     </div>
