@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { Details, LineageLabel, LineageView, Minimap } from '.'
+import { Details, LineageLabel, LineageView } from '.'
 
 
 const simpleGraph = [
@@ -57,9 +57,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <LineageView nodes={simpleGraph}>
         <LineageLabel />
         <Details />
-        <Minimap />
-    </LineageView>
+      </LineageView>
     </div>
- 
+
   </React.StrictMode>,
 )

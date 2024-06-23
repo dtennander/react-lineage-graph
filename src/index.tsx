@@ -61,6 +61,7 @@ const GlassPlane = styled.div`
 
 export const Details = () => {
   const pickedNode = useNode();
+  if (!pickedNode) return null;
   return (
     <div style={{ position: "absolute", bottom: "1em", left: "1em" }}>
       <GlassPlane>
@@ -75,13 +76,6 @@ export const Details = () => {
           }
         </ul>
       </GlassPlane>
-    </div>
-  )
-}
-
-export const Minimap = () => {
-  return (
-    <div>
     </div>
   )
 }
