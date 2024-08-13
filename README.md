@@ -1,30 +1,53 @@
-# React + TypeScript + Vite
+# React Lineage Graph
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Small react library to create a lineage graph using D3 and React.
 
-Currently, two official plugins are available:
+## Usage
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+The Library is composed of a main component `LineageView` that takes a `data` that
+should be rendered as a property.
 
-## Expanding the ESLint configuration
+The library then contains a few components that can be used to customize
+the rendering of the graph.
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+- `GraphNode` - Component that takes a function as a child
+  that should return the node element.
+- `LineageDetails` - Component that takes a function as a child
+  that should return the details element.
+- `Title` - Tells the view to render a title.
 
-- Configure the top-level `parserOptions` property like this:
+### Example
 
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
+```jsx
+import React from 'react';
+
+const ExampleGraph => () => {
+  const data = {
+    nodes: [
+      { id: 'A', label: 'Node A' },
+      { id: 'B', label: 'Node B' },
+      { id: 'C', label: 'Node C' },
+    ],
+    links: [
+      { source: 'A', target: 'B' },
+      { source: 'B', target: 'C' },
+    ],
+  };
+
+  return (
+    <LineageView data={data}>
+      {/*
+        You can add any children here that you want to be displayed on the graph.
+        For example, you could add a tooltip or a legend.
+      */}
+      <LineageDetails/>
+      {/* As well as how each node should be rendered /*}
+      <GraphNode>
+        {node => (
+          <circle r={5} fill="blue" />
+        )}
+      </GraphNode>
+    </LineageView>
+  );
+};
 ```
-
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
