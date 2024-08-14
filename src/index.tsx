@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import { LineageRender, Node } from "./LineageRender";
 import { LineageProvider, useNode } from "./LineageContext";
-import React, { ReactElement, ReactNode } from "react";
+import React from "react";
 
 export const StyledView = styled.div`
   display: relative;
@@ -20,36 +20,24 @@ const Background = styled.div`
 type LineageViewProps = {
   nodes: Node[];
   children: React.ReactNode;
+  nodeComponent?: React.ComponentType<{ node: Node }>;
 };
 
-export const LineageView = ({ children, nodes }: LineageViewProps) => {
-  const [graphNode, ...rest] = (
-    React.Children.toArray(children) as ReactElement[]
-  ).reduce<ReactElement[]>(
-    ([graphNode, ...rest], child: ReactElement) => {
-      if (child.type === GraphNode) {
-        return [child, rest];
-      }
-      return [graphNode, [...(rest || []), child]];
-    },
-    [null],
-  );
+export const LineageView = ({
+  children,
+  nodes,
+  nodeComponent,
+}: LineageViewProps) => {
   return (
     <StyledView>
       <LineageProvider>
         <Background style={{ width: "100%", height: "100%" }}>
-          <LineageRender nodes={nodes}>
-            {graphNode?.props.children}
-          </LineageRender>
-          {rest}
+          <LineageRender nodes={nodes} NodeComponent={nodeComponent} />
+          {children}
         </Background>
       </LineageProvider>
     </StyledView>
   );
-};
-
-export const GraphNode: React.FC<{ children(node: Node): ReactNode }> = () => {
-  return <></>;
 };
 
 export const LineageLabel = () => {

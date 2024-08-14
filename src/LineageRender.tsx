@@ -1,5 +1,5 @@
 import * as d3 from "d3";
-import React, { useRef, useEffect, useMemo, memo, ReactNode } from "react";
+import { useRef, useEffect, useMemo, memo, ComponentType } from "react";
 import styled from "styled-components";
 import { useSetNode } from "./LineageContext";
 import { renderToString } from "react-dom/server";
@@ -32,12 +32,17 @@ const StyledSvg = styled.svg`
   }
 `;
 
+type LineageRenderProps = {
+  nodes: Node[];
+  NodeComponent?: ComponentType<{ node: Node }>;
+};
+
 /**
  * Renders a lineage graph using d3
  * @param nodes - The nodes of the graph
  */
 export const LineageRender = memo(
-  ({ nodes, children }: { nodes: Node[]; children(node: Node): ReactNode }) => {
+  ({ nodes, NodeComponent }: LineageRenderProps) => {
     const svgRef = useRef<SVGSVGElement | null>(null);
     const d3Nodes = useMemo(() => addDepth(nodes), [nodes]);
     const links = useMemo(() => createLinks(d3Nodes), [d3Nodes]);
@@ -55,13 +60,17 @@ export const LineageRender = memo(
 
       svg.call(zoom);
       const link = drawLinks(zoomableGroup, links);
-      const node = drawNodes(zoomableGroup, d3Nodes, null, (node) =>
-        children ? renderToString(children(node)) : node.name,
+      const node = drawNodes(
+        zoomableGroup,
+        d3Nodes,
+        null,
+        NodeComponent &&
+          ((node) => renderToString(<NodeComponent node={node} />)),
       );
       const simulation = createForceSimulation(svgRef.current, d3Nodes, links);
 
       node.call(handleDrag(simulation));
-      node.on("click", function (e, d) {
+      node.on("click", function (_, d) {
         setPickedNode(nodes.find((n) => n.name === d.name) ?? null);
         d3.selectAll("*").classed("selected", false);
         d3.select(this).classed("selected", true);
@@ -94,7 +103,7 @@ export const LineageRender = memo(
         simulation.stop();
         svg.selectAll("*").remove();
       };
-    }, [svgRef, d3Nodes, links, setPickedNode, nodes]);
+    }, [svgRef, d3Nodes, links, setPickedNode, nodes, NodeComponent]);
     return <StyledSvg ref={svgRef} width="100%" height="100%" />;
   },
 );
@@ -132,7 +141,7 @@ const drawNodes = <E extends Element>(
   svg: d3.Selection<E, unknown, null, undefined>,
   nodes: D3Node[],
   pickedNode: Node | null,
-  nodeGenerator: (node: Node) => string,
+  nodeGenerator?: (node: Node) => string,
 ) => {
   const nodeBoxes = svg
     .append("g")
@@ -142,26 +151,29 @@ const drawNodes = <E extends Element>(
     .append("g")
     .attr("class", "node")
     .classed("selected", (d) => d.name === pickedNode?.name);
-  nodeBoxes
-    .append("rect")
-    .attr("width", 250)
-    .attr("height", 50)
-    .attr("rx", 10)
-    .attr("ry", 10)
-    .attr("x", -125)
-    .attr("y", -25);
-  nodeBoxes
-    .append("foreignObject")
-    .attr("width", 250)
-    .attr("height", 50)
-    .attr("rx", 10)
-    .attr("ry", 10)
-    .attr("x", -125)
-    .attr("y", -25)
-    .append("xhtml:div")
-    .style("width", "100%")
-    .style("height", "100%")
-    .html(nodeGenerator);
+  if (nodeGenerator) {
+    nodeBoxes
+      .append("foreignObject")
+      .attr("width", 250)
+      .attr("height", 50)
+      .attr("rx", 10)
+      .attr("ry", 10)
+      .attr("x", -125)
+      .attr("y", -25)
+      .append("xhtml:div")
+      .style("width", "100%")
+      .style("height", "100%")
+      .html(nodeGenerator);
+  } else {
+    nodeBoxes
+      .append("rect")
+      .attr("width", 250)
+      .attr("height", 50)
+      .attr("rx", 10)
+      .attr("ry", 10)
+      .attr("x", -125)
+      .attr("y", -25);
+  }
   return nodeBoxes;
 };
 

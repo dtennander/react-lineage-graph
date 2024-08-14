@@ -10,8 +10,6 @@ should be rendered as a property.
 The library then contains a few components that can be used to customize
 the rendering of the graph.
 
-- `GraphNode` - Component that takes a function as a child
-  that should return the node element.
 - `LineageDetails` - Component that takes a function as a child
   that should return the details element.
 - `Title` - Tells the view to render a title.
@@ -35,18 +33,15 @@ const ExampleGraph => () => {
   };
 
   return (
-    <LineageView data={data}>
+    <LineageView
+      data={data}
+      NodeComponent={({node}) => <circle r={5} fill="blue"/>}
+    >
       {/*
         You can add any children here that you want to be displayed on the graph.
         For example, you could add a tooltip or a legend.
       */}
       <LineageDetails/>
-      {/* As well as how each node should be rendered /*}
-      <GraphNode>
-        {node => (
-          <circle r={5} fill="blue" />
-        )}
-      </GraphNode>
     </LineageView>
   );
 };
