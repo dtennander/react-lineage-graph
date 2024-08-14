@@ -41,15 +41,20 @@ const simpleGraph = [
   },
 ];
 
-const NiceNode = ({ node }) => {
+const NiceNode = ({ node }: { node: { name: string } }) => {
   return (
     <div
       style={{
         display: "flex",
         flexDirection: "row",
         alignItems: "center",
-        justifyContent: "space-between",
+        backgroundColor: "lightgray",
+        borderRadius: "5px",
+        height: "100%",
+        width: "100%",
+        justifyContent: "space-around",
       }}
+      onClick={() => alert(node.name)}
     >
       <h4>{node.name}</h4>
     </div>

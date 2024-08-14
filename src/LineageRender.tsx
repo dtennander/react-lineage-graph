@@ -2,7 +2,7 @@ import * as d3 from "d3";
 import { useRef, useEffect, useMemo, memo, ComponentType } from "react";
 import styled from "styled-components";
 import { useSetNode } from "./LineageContext";
-import { renderToString } from "react-dom/server";
+import { createRoot, Container } from "react-dom/client";
 
 export type Node = {
   name: string;
@@ -65,7 +65,10 @@ export const LineageRender = memo(
         d3Nodes,
         null,
         NodeComponent &&
-          ((node) => renderToString(<NodeComponent node={node} />)),
+          ((node, ref) => {
+            const root = createRoot(ref as Container);
+            root.render(<NodeComponent node={node} />);
+          }),
       );
       const simulation = createForceSimulation(svgRef.current, d3Nodes, links);
 
@@ -141,7 +144,7 @@ const drawNodes = <E extends Element>(
   svg: d3.Selection<E, unknown, null, undefined>,
   nodes: D3Node[],
   pickedNode: Node | null,
-  nodeGenerator?: (node: Node) => string,
+  nodeRenderer?: (node: Node, ref: d3.BaseType) => void,
 ) => {
   const nodeBoxes = svg
     .append("g")
@@ -151,8 +154,8 @@ const drawNodes = <E extends Element>(
     .append("g")
     .attr("class", "node")
     .classed("selected", (d) => d.name === pickedNode?.name);
-  if (nodeGenerator) {
-    nodeBoxes
+  if (nodeRenderer) {
+    const divs = nodeBoxes
       .append("foreignObject")
       .attr("width", 250)
       .attr("height", 50)
@@ -162,8 +165,8 @@ const drawNodes = <E extends Element>(
       .attr("y", -25)
       .append("xhtml:div")
       .style("width", "100%")
-      .style("height", "100%")
-      .html(nodeGenerator);
+      .style("height", "100%");
+    divs.each((node, i, refs) => nodeRenderer(node, refs[i]));
   } else {
     nodeBoxes
       .append("rect")
