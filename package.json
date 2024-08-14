@@ -1,8 +1,8 @@
 {
-  "name": "react-lineage-graph",
-  "private": true,
-  "version": "0.0.0",
+  "name": "@dtennander/react-lineage-graph",
+  "version": "0.1.2",
   "type": "module",
+  "main": "src/index.tsx",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
