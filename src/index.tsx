@@ -3,7 +3,7 @@ import { LineageRender, Node } from "./LineageRender";
 import { LineageProvider, useNode } from "./LineageContext";
 import React from "react";
 
-export const StyledView = styled.div`
+const StyledView = styled.div`
   display: relative;
   overflow: auto;
   width: 100%;
