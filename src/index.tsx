@@ -19,7 +19,7 @@ const Background = styled.div`
 
 type LineageViewProps = {
   nodes: Node[];
-  children: React.ReactNode;
+  children?: React.ReactNode;
   nodeComponent?: React.ComponentType<{ node: Node }>;
 };
 
