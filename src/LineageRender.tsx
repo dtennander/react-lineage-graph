@@ -1,16 +1,27 @@
 import * as d3 from "d3";
-import { useRef, useEffect, useMemo, memo, ComponentType } from "react";
+import { useRef, useEffect, useMemo, memo } from "react";
 import styled from "styled-components";
 import { useSetNode } from "./LineageContext";
 import { createRoot, Container } from "react-dom/client";
 
-export type Node = {
+/**
+ * A Node in the lineage graph. It has a name, dependencies, and any other properties you want to add to it.
+ */
+export type Node<T> = T & {
+  /**
+   * The name of the node, used to reference it in the dependencies Array
+   * @example "node1"
+   */
   name: string;
+  /**
+   * The names of the nodes this node depends on
+   * @example ["node2", "node3"]
+   */
   dependencies: string[];
 };
 
-type D3Node = d3.SimulationNodeDatum &
-  Node & {
+type D3Node<T> = d3.SimulationNodeDatum &
+  Node<T> & {
     depth: number;
   };
 
@@ -32,17 +43,21 @@ const StyledSvg = styled.svg`
   }
 `;
 
-type LineageRenderProps = {
-  nodes: Node[];
-  NodeComponent?: ComponentType<{ node: Node }>;
+type LineageRenderProps<T> = {
+  nodes: Node<T>[];
+  NodeComponent?: React.ComponentType<{ node: Node<T> }>;
 };
+
+// Used just to help the TS compiler to understand generic types better.
+// https://stackoverflow.com/questions/57477395/typescript-generic-class-equivalent-for-react-memo
+const genericMemo: <T>(component: T) => T = memo;
 
 /**
  * Renders a lineage graph using d3
  * @param nodes - The nodes of the graph
  */
-export const LineageRender = memo(
-  ({ nodes, NodeComponent }: LineageRenderProps) => {
+export const LineageRender = genericMemo(
+  <T,>({ nodes, NodeComponent }: LineageRenderProps<T>) => {
     const svgRef = useRef<SVGSVGElement | null>(null);
     const d3Nodes = useMemo(() => addDepth(nodes), [nodes]);
     const links = useMemo(() => createLinks(d3Nodes), [d3Nodes]);
@@ -111,20 +126,21 @@ export const LineageRender = memo(
   },
 );
 
-const createLinks = (nodes: D3Node[]): d3.SimulationLinkDatum<D3Node>[] => {
+const createLinks = <T,>(
+  nodes: D3Node<T>[],
+): d3.SimulationLinkDatum<D3Node<T>>[] => {
   return nodes
     .map((d) => d.dependencies.map((dep) => ({ target: d, source: dep })))
     .flat();
 };
 
-const addDepth = (nodes: Node[]): D3Node[] => {
-  const nodeMap = new Map<string, D3Node>(
+const addDepth = <T,>(nodes: Node<T>[]): D3Node<T>[] => {
+  const nodeMap = new Map<string, D3Node<T>>(
     nodes.map((node) => [node.name, { ...node, depth: 0 }]),
   );
-  const stack: [D3Node, string[]][] = Array.from(nodeMap.values()).map((v) => [
-    v,
-    [],
-  ]);
+  const stack: [D3Node<T>, string[]][] = Array.from(nodeMap.values()).map(
+    (v) => [v, []],
+  );
   while (stack.length > 0) {
     const [d3Node, visited] = stack.pop()!;
     d3Node.dependencies.forEach((dep) => {
@@ -140,16 +156,16 @@ const addDepth = (nodes: Node[]): D3Node[] => {
 /********  D3 Functions ********/
 
 // Draws nodes on the canvas
-const drawNodes = <E extends Element>(
+const drawNodes = <E extends Element, T>(
   svg: d3.Selection<E, unknown, null, undefined>,
-  nodes: D3Node[],
-  pickedNode: Node | null,
-  nodeRenderer?: (node: Node, ref: d3.BaseType) => void,
+  nodes: D3Node<T>[],
+  pickedNode: Node<T> | null,
+  nodeRenderer?: (node: Node<T>, ref: d3.BaseType) => void,
 ) => {
   const nodeBoxes = svg
     .append("g")
     .selectAll("g")
-    .data<D3Node>(nodes)
+    .data<D3Node<T>>(nodes)
     .enter()
     .append("g")
     .attr("class", "node")
@@ -180,14 +196,14 @@ const drawNodes = <E extends Element>(
   return nodeBoxes;
 };
 
-const drawLinks = <E extends Element>(
+const drawLinks = <E extends Element, T>(
   svg: d3.Selection<E, unknown, null, undefined>,
-  links: d3.SimulationLinkDatum<D3Node>[],
+  links: d3.SimulationLinkDatum<D3Node<T>>[],
 ) => {
   return svg
     .append("g")
     .selectAll("line")
-    .data<d3.SimulationLinkDatum<D3Node>>(links)
+    .data<d3.SimulationLinkDatum<D3Node<T>>>(links)
     .enter()
     .append("path")
     .attr("class", "link");
@@ -195,28 +211,28 @@ const drawLinks = <E extends Element>(
 
 // Creates a simulation with forces
 
-const createForceSimulation = (
+const createForceSimulation = <T,>(
   canvas: SVGSVGElement,
-  nodes: D3Node[],
-  links: d3.SimulationLinkDatum<D3Node>[],
+  nodes: D3Node<T>[],
+  links: d3.SimulationLinkDatum<D3Node<T>>[],
 ) => {
   const width = canvas.clientWidth;
   const height = canvas.clientHeight;
   return d3
-    .forceSimulation<D3Node>(nodes)
+    .forceSimulation<D3Node<T>>(nodes)
     .force(
       "link",
       d3
-        .forceLink<D3Node, d3.SimulationLinkDatum<D3Node>>(links)
+        .forceLink<D3Node<T>, d3.SimulationLinkDatum<D3Node<T>>>(links)
         .id((d) => d.name)
         .distance(200)
         .strength(0.1),
     )
-    .force("dontCollide", d3.forceCollide<D3Node>(100).strength(0.1))
+    .force("dontCollide", d3.forceCollide<D3Node<T>>(100).strength(0.1))
     .force("align", d3.forceY(height / 2).strength(0.1))
     .force(
       "onDepth",
-      d3.forceX<D3Node>((d) => width * 0.75 - 300 * d.depth).strength(1),
+      d3.forceX<D3Node<T>>((d) => width * 0.75 - 300 * d.depth).strength(1),
     )
     .force("center", d3.forceCenter(width / 2, height / 2).strength(1));
 };

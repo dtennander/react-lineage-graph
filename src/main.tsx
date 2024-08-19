@@ -25,11 +25,11 @@ const simpleGraph = [
   },
   {
     name: "dep5",
-    dependencies: ["dep8"],
+    dependencies: [],
   },
   {
     name: "dep6",
-    dependencies: [],
+    dependencies: ["dep8"],
   },
   {
     name: "dep7",

@@ -17,17 +17,35 @@ const Background = styled.div`
   background-size: 10px 10px;
 `;
 
-type LineageViewProps = {
-  nodes: Node[];
+type LineageViewProps<T> = {
+  /**
+   * The nodes of the lineage graph
+   */
+  nodes: Node<T>[];
+  /**
+   * Any children to render on top of the lineage graph
+   * Expected Children are:
+   * - Details
+   */
   children?: React.ReactNode;
-  nodeComponent?: React.ComponentType<{ node: Node }>;
+  /**
+   * A custom component to render each node
+   */
+  nodeComponent?: React.ComponentType<{ node: Node<T> }>;
 };
 
-export const LineageView = ({
+/**
+ * LineageView is the main compononent of the library.
+ * It renders the provided nodes as a lineage graph, and allows for custom node rendering by passing a NodeComponent.
+ *
+ * The children you can add to this will be rendered ontop of the lineage graph. Expected Children are:
+ * - Details
+ */
+export const LineageView = <T,>({
   children,
   nodes,
   nodeComponent,
-}: LineageViewProps) => {
+}: LineageViewProps<T>) => {
   return (
     <StyledView>
       <LineageProvider>
@@ -37,16 +55,6 @@ export const LineageView = ({
         </Background>
       </LineageProvider>
     </StyledView>
-  );
-};
-
-export const LineageLabel = () => {
-  return (
-    <div style={{ position: "absolute", top: "1em", left: "1em" }}>
-      <GlassPlane>
-        <h1>Lineage Label</h1>
-      </GlassPlane>
-    </div>
   );
 };
 
@@ -60,6 +68,10 @@ const GlassPlane = styled.div`
   padding: 0.5em 1em;
 `;
 
+/**
+ * A component that displays the details of the currently selected node.
+ * It will be rendered on top of the lineage graph.
+ */
 export const Details = () => {
   const pickedNode = useNode();
   if (!pickedNode) return null;
@@ -70,17 +82,11 @@ export const Details = () => {
         <ul>
           {Object.entries(pickedNode || {}).map(([key, value]) => (
             <li key={key}>
-              <strong>{key}</strong>: {value}
+              <strong>{key}</strong>: {value.toString()}
             </li>
           ))}
         </ul>
       </GlassPlane>
     </div>
   );
-};
-
-export const NodeRender: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  return <div>{children}</div>;
 };
