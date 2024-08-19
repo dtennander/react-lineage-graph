@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { Details, LineageLabel, LineageView } from ".";
+import { Details, FullScreen, LineageView } from ".";
 
 const simpleGraph = [
   {
@@ -29,7 +29,7 @@ const simpleGraph = [
   },
   {
     name: "dep6",
-    dependencies: ["dep8"],
+    dependencies: [],
   },
   {
     name: "dep7",
@@ -63,11 +63,26 @@ const NiceNode = ({ node }: { node: { name: string } }) => {
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <div style={{ width: "100vw", height: "98vh" }}>
-      <LineageView nodes={simpleGraph} nodeComponent={NiceNode}>
-        <LineageLabel />
-        <Details />
-      </LineageView>
+    <div
+      style={{
+        display: "flex",
+        height: "98vh",
+        width: "100vw",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <div
+        style={{
+          width: "70vw",
+          height: "48vh",
+        }}
+      >
+        <LineageView nodes={simpleGraph} nodeComponent={NiceNode}>
+          <Details />
+          <FullScreen />
+        </LineageView>
+      </div>
     </div>
   </React.StrictMode>,
 );
