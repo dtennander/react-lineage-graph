@@ -143,11 +143,14 @@ const addDepth = <T,>(nodes: Node<T>[]): D3Node<T>[] => {
   );
   while (stack.length > 0) {
     const [d3Node, visited] = stack.pop()!;
+    d3Node.depth = Math.max(d3Node.depth, visited.length);
+
     d3Node.dependencies.forEach((dep) => {
       const depNode = nodeMap.get(dep);
       if (!depNode) throw new Error(`Node ${dep} not found`);
-      depNode.depth = Math.max(depNode.depth, d3Node.depth + 1);
-      stack.push([depNode, visited.concat(d3Node.name)]);
+      if (!visited.includes(depNode.name)) {
+        stack.push([depNode, visited.concat(d3Node.name)]);
+      }
     });
   }
   return Array.from(nodeMap.values());

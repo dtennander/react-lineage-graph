@@ -78,7 +78,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           height: "48vh",
         }}
       >
-        <LineageView nodes={simpleGraph} nodeComponent={NiceNode}>
+        <LineageView nodes={simpleGraph} nodeComponent={NiceNode} fullscreen>
           <Details />
           <FullScreen />
         </LineageView>
