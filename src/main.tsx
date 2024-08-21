@@ -50,8 +50,8 @@ const NiceNode = ({ node }: { node: { name: string } }) => {
         alignItems: "center",
         backgroundColor: "lightgray",
         borderRadius: "5px",
-        height: "100%",
-        width: "100%",
+        height: "50px",
+        width: "250px",
         justifyContent: "space-around",
       }}
       onClick={() => alert(node.name)}

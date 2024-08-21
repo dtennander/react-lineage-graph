@@ -192,13 +192,15 @@ const drawNodes = <E extends Element, T>(
   if (nodeRenderer) {
     const divs = nodeBoxes
       .append("foreignObject")
-      .attr("width", 250)
-      .attr("height", 50)
+      .attr("width", 1)
+      .attr("height", 1)
       .attr("rx", 10)
       .attr("ry", 10)
-      .attr("x", -125)
-      .attr("y", -25)
+      .attr("x", 0)
+      .attr("y", 0)
+      .style("overflow", "visible")
       .append("xhtml:div")
+      .attr("class", "node-content")
       .style("width", "100%")
       .style("height", "100%");
     divs.each((node, i, refs) => nodeRenderer(node, refs[i]));
@@ -209,8 +211,8 @@ const drawNodes = <E extends Element, T>(
       .attr("height", 50)
       .attr("rx", 10)
       .attr("ry", 10)
-      .attr("x", -125)
-      .attr("y", -25);
+      .attr("x", 0)
+      .attr("y", 0);
   }
   return nodeBoxes;
 };
@@ -268,18 +270,32 @@ const updatePositions =
     links: d3.Selection<LE, d3.SimulationLinkDatum<D>, P, unknown>,
   ) =>
   () => {
+    const nodeDiv = (nodes.select(".node-content")?.node() as Element)
+      ?.childNodes[0] as Element;
+    const nodeHeight = nodeDiv?.clientHeight ?? 50;
+    const nodeWidth = nodeDiv?.clientWidth ?? 250;
+    console.log(nodeHeight, nodeWidth);
     links.attr("d", (d) => {
       const sourceNode = d.source as D;
       const targetNode = d.target as D;
-      const sourceX = sourceNode.x! + 125;
-      const sourceY = sourceNode.y!;
-      const targetX = targetNode.x! - 125;
-      const targetY = targetNode.y!;
+      const sourceX = sourceNode.x! + nodeWidth;
+      const sourceY = sourceNode.y! + nodeHeight / 2;
+      const targetX = targetNode.x!;
+      const targetY = targetNode.y! + nodeHeight / 2;
       const isBackwards = sourceX - 50 > targetX;
       const midX = sourceX + (targetX - sourceX) / 2;
       if (isBackwards) {
         const directionY = targetY - sourceY > 0 ? -1 : 1;
-        return `M${sourceX},${sourceY} C${sourceX + 150},${sourceY - directionY * 150} ${targetX - 150},${targetY + directionY * 150} ${targetX},${targetY}`;
+        return (
+          // Starting point
+          `M${sourceX},${sourceY} ` +
+          // Curve Exit direction
+          `C${sourceX + nodeWidth / 2},${sourceY - directionY * (nodeWidth / 2)} ` +
+          // Curve Entry direction
+          `${targetX - nodeWidth / 2},${targetY + directionY * (nodeWidth / 2)} ` +
+          // Ending point
+          `${targetX},${targetY}`
+        );
       }
       return `M${sourceX},${sourceY} C${midX},${sourceY} ${midX},${targetY} ${targetX},${targetY}`;
     });
