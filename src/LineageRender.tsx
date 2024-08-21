@@ -127,24 +127,40 @@ export const LineageRender = genericMemo(
 );
 
 const createLinks = <T,>(
-  nodes: D3Node<T>[],
+  nodes: Map<string, D3Node<T>>,
 ): d3.SimulationLinkDatum<D3Node<T>>[] => {
-  return nodes
-    .map((d) => d.dependencies.map((dep) => ({ target: d, source: dep })))
+  return Array.from(nodes.values())
+    .map((d) =>
+      d.dependencies.map((dep) => ({
+        target: d,
+        source: nodes.get(dep) || dep,
+      })),
+    )
     .flat();
 };
 
-const addDepth = <T,>(nodes: Node<T>[]): D3Node<T>[] => {
-  const nodeMap = new Map<string, D3Node<T>>(
-    nodes.map((node) => [node.name, { ...node, depth: 0 }]),
+const addDepth = <T,>(nodes: Node<T>[]): Map<string, D3Node<T>> => {
+  const nodeMap = new Map(
+    nodes.map((node) => [
+      node.name,
+      {
+        ...node,
+        depth: -1,
+        shortestPath: [],
+        ins: nodes.filter((n) => n.dependencies.includes(node.name)).length,
+      },
+    ]),
   );
-  const stack: [D3Node<T>, string[]][] = Array.from(nodeMap.values()).map(
-    (v) => [v, []],
-  );
+  const stack: [D3Node<T> & { shortestPath: string[] }, string[]][] =
+    Array.from(nodeMap.values())
+      .filter((n) => n.ins === 0)
+      .map((v) => [v, []]);
   while (stack.length > 0) {
     const [d3Node, visited] = stack.pop()!;
-    d3Node.depth = Math.max(d3Node.depth, visited.length);
-
+    if (d3Node.depth === -1 || visited.length < d3Node.depth) {
+      d3Node.depth = visited.length;
+      d3Node.shortestPath = visited;
+    }
     d3Node.dependencies.forEach((dep) => {
       const depNode = nodeMap.get(dep);
       if (!depNode) throw new Error(`Node ${dep} not found`);
@@ -153,7 +169,7 @@ const addDepth = <T,>(nodes: Node<T>[]): D3Node<T>[] => {
       }
     });
   }
-  return Array.from(nodeMap.values());
+  return nodeMap;
 };
 
 /********  D3 Functions ********/
@@ -161,14 +177,14 @@ const addDepth = <T,>(nodes: Node<T>[]): D3Node<T>[] => {
 // Draws nodes on the canvas
 const drawNodes = <E extends Element, T>(
   svg: d3.Selection<E, unknown, null, undefined>,
-  nodes: D3Node<T>[],
+  nodes: Map<string, D3Node<T>>,
   pickedNode: Node<T> | null,
   nodeRenderer?: (node: Node<T>, ref: d3.BaseType) => void,
 ) => {
   const nodeBoxes = svg
     .append("g")
     .selectAll("g")
-    .data<D3Node<T>>(nodes)
+    .data<D3Node<T>>(nodes.values())
     .enter()
     .append("g")
     .attr("class", "node")
@@ -216,13 +232,13 @@ const drawLinks = <E extends Element, T>(
 
 const createForceSimulation = <T,>(
   canvas: SVGSVGElement,
-  nodes: D3Node<T>[],
+  nodes: Map<string, D3Node<T>>,
   links: d3.SimulationLinkDatum<D3Node<T>>[],
 ) => {
   const width = canvas.clientWidth;
   const height = canvas.clientHeight;
   return d3
-    .forceSimulation<D3Node<T>>(nodes)
+    .forceSimulation<D3Node<T>>(Array.from(nodes.values()))
     .force(
       "link",
       d3
@@ -243,7 +259,8 @@ const createForceSimulation = <T,>(
 const updatePositions =
   <
     E extends Element,
-    D extends d3.SimulationNodeDatum,
+    T,
+    D extends D3Node<T>,
     P extends Element,
     LE extends Element,
   >(
@@ -258,7 +275,12 @@ const updatePositions =
       const sourceY = sourceNode.y!;
       const targetX = targetNode.x! - 125;
       const targetY = targetNode.y!;
+      const isBackwards = sourceX - 50 > targetX;
       const midX = sourceX + (targetX - sourceX) / 2;
+      if (isBackwards) {
+        const directionY = targetY - sourceY > 0 ? -1 : 1;
+        return `M${sourceX},${sourceY} C${sourceX + 150},${sourceY - directionY * 150} ${targetX - 150},${targetY + directionY * 150} ${targetX},${targetY}`;
+      }
       return `M${sourceX},${sourceY} C${midX},${sourceY} ${midX},${targetY} ${targetX},${targetY}`;
     });
     nodes.attr("transform", (d) => `translate(${d.x},${d.y})`);
