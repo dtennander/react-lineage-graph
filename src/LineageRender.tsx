@@ -274,7 +274,6 @@ const updatePositions =
       ?.childNodes[0] as Element;
     const nodeHeight = nodeDiv?.clientHeight ?? 50;
     const nodeWidth = nodeDiv?.clientWidth ?? 250;
-    console.log(nodeHeight, nodeWidth);
     links.attr("d", (d) => {
       const sourceNode = d.source as D;
       const targetNode = d.target as D;
